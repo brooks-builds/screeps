@@ -1,5 +1,5 @@
 [package]
-name = "bb_screeps_arena"
+name = "screeps-arena-bb"
 version = "0.0.0"
 authors = []
 edition = "2018"
@@ -41,3 +41,4 @@ default = ["arena-capture-the-flag"]
 arena-capture-the-flag = ["screeps-arena-game-api/arena-capture-the-flag"]
 arena-spawn-and-swamp = ["screeps-arena-game-api/arena-spawn-and-swamp"]
 arena-collect-and-control = ["screeps-arena-game-api/arena-collect-and-control"]
+arena-tutorial-loop-and-import = []
