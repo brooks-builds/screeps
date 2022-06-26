@@ -45,4 +45,9 @@ pub fn tick() {
     {
         tutorials::terrain::run();
     }
+
+    #[cfg(feature = "arena-tutorial-spawn-creeps")]
+    {
+        tutorials::spawn_creeps::run();
+    }
 }
