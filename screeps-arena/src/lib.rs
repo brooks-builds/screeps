@@ -50,4 +50,9 @@ pub fn tick() {
     {
         tutorials::spawn_creeps::run();
     }
+
+    #[cfg(feature = "arena-tutorial-harvest-energy")]
+    {
+        tutorials::harvest_energy::run();
+    }
 }
