@@ -60,4 +60,9 @@ pub fn tick() {
     {
         tutorials::construction::run(tick);
     }
+
+    #[cfg(feature = "arena-tutorial-final-test")]
+    {
+        tutorials::final_test::run(tick);
+    }
 }

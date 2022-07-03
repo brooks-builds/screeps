@@ -1,5 +1,6 @@
 pub mod construction;
 pub mod creeps_bodies;
+pub mod final_test;
 pub mod first_attack;
 pub mod harvest_energy;
 pub mod loop_and_import;
