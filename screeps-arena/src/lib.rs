@@ -55,4 +55,9 @@ pub fn tick() {
     {
         tutorials::harvest_energy::run();
     }
+
+    #[cfg(feature = "arena-tutorial-construction")]
+    {
+        tutorials::construction::run(tick);
+    }
 }

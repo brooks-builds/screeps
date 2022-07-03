@@ -1,3 +1,4 @@
+pub mod construction;
 pub mod creeps_bodies;
 pub mod first_attack;
 pub mod harvest_energy;
