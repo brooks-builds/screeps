@@ -8,6 +8,11 @@ use screeps_arena::{
 use std::{collections::HashMap, hash::Hash};
 use wasm_bindgen::JsValue;
 
+const DESIRED_SPAWN_REFILLER_COUNT: u8 = 2;
+const DESIRED_BUILDER_COUNT: u8 = 0;
+const DESIRED_FIGHTER_COUNT: u8 = 1;
+const DESIRED_RANGER_COUNT: u8 = 5;
+
 #[derive(PartialEq, Eq, Hash, Debug, Clone, Copy)]
 enum Role {
     SpawnRefiller,
@@ -91,11 +96,11 @@ pub fn run(tick: u32) {
     let spawn = get_objects_by_prototype(prototypes::STRUCTURE_SPAWN)[0].clone();
 
     if tick == 1 {
-        create_tower_construction_sites(&spawn);
+        // create_tower_construction_sites(&spawn);
     }
 
     let my_creeps: Vec<Creep> = get_creeps(true);
-    let _enemy_creeps = get_creeps(false);
+    let enemy_creeps = get_creeps(false);
 
     let mut role_count = count_roles(&my_creeps);
 
@@ -107,10 +112,10 @@ pub fn run(tick: u32) {
         assign_creep_state(creep);
         match Role::from(creep) {
             Role::SpawnRefiller => run_spawn_refiller_role(creep, &spawn),
-            Role::Builder => todo!(),
+            Role::Builder => run_builder(creep),
             Role::TurretRefiller => todo!(),
-            Role::Fighter => todo!(),
-            Role::Ranger => todo!(),
+            Role::Fighter => run_fighter(creep, &enemy_creeps),
+            Role::Ranger => run_ranger(creep, &enemy_creeps),
             Role::Healer => todo!(),
             Role::None => {}
         }
@@ -184,15 +189,23 @@ fn log_role_counts(role_count: &HashMap<Role, u8>) {
 }
 
 fn control_spawner(spawn: &StructureSpawn, role_count: &HashMap<Role, u8>) -> Option<Role> {
-    if let Some(spawn_refiller_count) = role_count.get(&Role::SpawnRefiller) {
-        if *spawn_refiller_count < 1 {
-            spawn_creep(spawn, Role::SpawnRefiller)
-        } else {
-            None
-        }
-    } else {
-        spawn_creep(spawn, Role::SpawnRefiller)
+    if get_creep_count(role_count, Role::SpawnRefiller) < DESIRED_SPAWN_REFILLER_COUNT {
+        return spawn_creep(spawn, Role::SpawnRefiller);
     }
+
+    if get_creep_count(role_count, Role::Ranger) < DESIRED_RANGER_COUNT {
+        return spawn_creep(spawn, Role::Ranger);
+    }
+
+    if get_creep_count(role_count, Role::Fighter) < DESIRED_FIGHTER_COUNT {
+        return spawn_creep(spawn, Role::Fighter);
+    }
+
+    None
+}
+
+fn get_creep_count(role_count: &HashMap<Role, u8>, role: Role) -> u8 {
+    role_count.get(&role).map_or(0, |count| *count)
 }
 
 fn attach_role_to_creep(role: Role, creep: &Creep) {
@@ -263,7 +276,7 @@ fn assign_creep_state(creep: &Creep) {
     let role = Role::from(creep);
 
     match role {
-        Role::SpawnRefiller => match state {
+        Role::SpawnRefiller | Role::Builder => match state {
             CreepState::Work => {
                 if creep.store().get_used_capacity(None) == 0 {
                     attach_to_creep(CreepState::Harvest.into(), creep, "state");
@@ -276,12 +289,11 @@ fn assign_creep_state(creep: &Creep) {
             }
             CreepState::Unknown => attach_to_creep(CreepState::Harvest.into(), creep, "state"),
         },
-        Role::Builder => todo!(),
-        Role::TurretRefiller => todo!(),
-        Role::Fighter => todo!(),
-        Role::Ranger => todo!(),
-        Role::Healer => todo!(),
-        Role::None => todo!(),
+        Role::Fighter => match state {
+            CreepState::Work => {}
+            _ => attach_to_creep(CreepState::Work.into(), creep, "state"),
+        },
+        _ => {}
     }
 }
 
@@ -295,5 +307,72 @@ fn harvest(creep: &Creep) {
     let result = creep.harvest(&sources[0]);
     if result == ReturnCode::NotInRange {
         creep.move_to(&sources[0], None);
+    }
+}
+
+fn run_builder(creep: &Creep) {
+    let state = CreepState::from(creep);
+    match state {
+        CreepState::Work => {
+            let construction_sites = get_objects_by_prototype(prototypes::CONSTRUCTION_SITE);
+            if construction_sites.is_empty() {
+                return;
+            }
+
+            let result = creep.build(&construction_sites[0]);
+            if result == ReturnCode::NotInRange {
+                creep.move_to(&construction_sites[0], None);
+            }
+        }
+        CreepState::Harvest => harvest(creep),
+        CreepState::Unknown => {}
+    }
+}
+
+fn run_fighter(creep: &Creep, enemies: &Vec<Creep>) {
+    let enemy_healers = enemies
+        .iter()
+        .filter(|creep| is_healer(creep))
+        .collect::<Vec<&Creep>>();
+
+    let target = if !enemy_healers.is_empty() {
+        enemy_healers[0]
+    } else if !enemies.is_empty() {
+        &enemies[0]
+    } else {
+        return;
+    };
+
+    if creep.attack(target) == ReturnCode::NotInRange {
+        creep.move_to(&target, None);
+    }
+}
+
+fn is_healer(creep: &Creep) -> bool {
+    for body_part in creep.body() {
+        if body_part.part() == Part::Heal {
+            return true;
+        }
+    }
+
+    false
+}
+
+fn run_ranger(creep: &Creep, enemies: &Vec<Creep>) {
+    let enemy_healers = enemies
+        .iter()
+        .filter(|creep| is_healer(creep))
+        .collect::<Vec<&Creep>>();
+
+    let target = if !enemy_healers.is_empty() {
+        enemy_healers[0]
+    } else if !enemies.is_empty() {
+        &enemies[0]
+    } else {
+        return;
+    };
+
+    if creep.ranged_attack(target) == ReturnCode::NotInRange {
+        creep.move_to(&target, None);
     }
 }
