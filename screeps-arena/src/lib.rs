@@ -1,6 +1,8 @@
 use screeps_arena::game;
 use wasm_bindgen::prelude::*;
 
+mod ctf;
+mod global;
 mod logging;
 mod tutorials;
 
@@ -64,5 +66,10 @@ pub fn tick() {
     #[cfg(feature = "arena-tutorial-final-test")]
     {
         tutorials::final_test::run(tick);
+    }
+
+    #[cfg(feature = "arena-capture-the-flag")]
+    {
+        ctf::run(tick);
     }
 }
