@@ -38,3 +38,12 @@ pub fn object_to_creep(object: &Object) -> Option<Creep> {
         .into_iter()
         .find(|creep| creep.id() == object_id)
 }
+
+pub fn get_closest_creep(creep: &Creep, other_creeps: &Vec<Creep>) -> Option<Creep> {
+    let other_creeps_array = create_creeps_array(other_creeps);
+    if let Some(closest_creep_object) = creep.find_closest_by_path(&other_creeps_array, None) {
+        object_to_creep(&closest_creep_object)
+    } else {
+        None
+    }
+}

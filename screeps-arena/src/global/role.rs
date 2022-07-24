@@ -5,9 +5,11 @@ use log::warn;
 use screeps_arena::Creep;
 use wasm_bindgen::JsValue;
 
+#[derive(PartialEq)]
 pub enum Role {
     Defender,
     Attacker,
+    Healer,
 }
 
 impl Role {
@@ -22,6 +24,7 @@ impl Role {
         JsValue::from_str(match self {
             Role::Defender => "defender",
             Role::Attacker => "attacker",
+            Role::Healer => "healer",
         })
     }
 }
@@ -39,6 +42,7 @@ impl From<&Creep> for Role {
         match role_string.as_str() {
             "defender" => Self::Defender,
             "attacker" => Self::Attacker,
+            "healer" => Self::Healer,
             _ => {
                 warn!("unknown role");
                 panic!();
