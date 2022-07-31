@@ -1,15 +1,14 @@
 use js_sys::Reflect;
 use log::warn;
 use screeps_arena::{
-    game::utils::{create_construction_site, get_objects_by_prototype},
-    prototypes::{self, PrototypeConstant},
+    game::utils::get_objects_by_prototype,
+    prototypes::{self},
     Creep, Part, ReturnCode, StructureSpawn,
 };
 use std::{collections::HashMap, hash::Hash};
 use wasm_bindgen::JsValue;
 
 const DESIRED_SPAWN_REFILLER_COUNT: u8 = 2;
-const DESIRED_BUILDER_COUNT: u8 = 0;
 const DESIRED_FIGHTER_COUNT: u8 = 1;
 const DESIRED_RANGER_COUNT: u8 = 5;
 
@@ -133,19 +132,6 @@ fn get_creeps(is_my: bool) -> Vec<Creep> {
         .collect()
 }
 
-fn create_tower_construction_sites(spawn: &StructureSpawn) {
-    create_tower_construction_site(spawn.x() + 5, spawn.y());
-    create_tower_construction_site(spawn.x(), spawn.y() - 5);
-    create_tower_construction_site(spawn.x() - 5, spawn.y());
-    create_tower_construction_site(spawn.x(), spawn.y() + 5);
-}
-
-fn create_tower_construction_site(x: u8, y: u8) {
-    if let Err(error) = create_construction_site(x, y, prototypes::STRUCTURE_TOWER.prototype()) {
-        warn!("Error creating construction site: {:?}", error)
-    }
-}
-
 fn count_roles(creeps: &Vec<Creep>) -> HashMap<Role, u8> {
     let mut counts = HashMap::new();
 
@@ -210,7 +196,12 @@ fn get_creep_count(role_count: &HashMap<Role, u8>, role: Role) -> u8 {
 
 fn attach_role_to_creep(role: Role, creep: &Creep) {
     if let Err(error) = Reflect::set(creep, &JsValue::from_str("role"), &role.into()) {
-        warn!("Error setting role {:?} on creep {}", role, creep.id());
+        warn!(
+            "Error setting role {:?} on creep {}: {:?}",
+            role,
+            creep.id(),
+            error
+        );
         panic!();
     }
 }

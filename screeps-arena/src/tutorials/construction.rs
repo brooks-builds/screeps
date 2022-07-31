@@ -3,7 +3,7 @@ use log::warn;
 use screeps_arena::{
     game::utils::{create_construction_site, get_objects_by_prototype},
     prototypes::{self, PrototypeConstant},
-    ConstructionSite, Creep, HasStore, ReturnCode, StructureContainer,
+    ConstructionSite, Creep, ReturnCode, StructureContainer,
 };
 use wasm_bindgen::JsValue;
 
@@ -90,7 +90,7 @@ pub fn run(tick: u32) {
 
 fn store_role_on_creep(creep: &Creep, role: Role) {
     if let Err(error) = Reflect::set(creep, &JsValue::from_str("role"), &role.into()) {
-        warn!("Error setting role on Creep");
+        warn!("Error setting role on Creep: {:?}", error);
         panic!();
     }
 }

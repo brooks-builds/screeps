@@ -1,8 +1,8 @@
-use js_sys::{Array, Object};
+use js_sys::Array;
 use log::warn;
 use screeps_arena::{
-    game::utils::{find_closest_by_path, get_objects_by_prototype},
-    prototypes, BodyPart, Creep, Flag, OwnedStructureProperties, ReturnCode, StructureTower,
+    game::utils::get_objects_by_prototype, prototypes, BodyPart, Creep, Flag,
+    OwnedStructureProperties, ReturnCode, StructureTower,
 };
 
 use crate::global::{
@@ -71,56 +71,58 @@ impl EnemyState {
 ///
 /// Once all enemies are dead, swarm the flag
 pub fn run(tick: u32) {
-    let my_creeps = get_creeps(true);
-    let my_flag = get_flag(true);
-    let enemies = get_creeps(false);
-    let my_towers = get_towers(true);
-    let enemy_flag = get_flag(false);
+    #[cfg(feature = "arena-capture-the-flag")]
+    {
+        let my_creeps = get_creeps(true);
+        let my_flag = get_flag(true);
+        let enemies = get_creeps(false);
+        let my_towers = get_towers(true);
+        let enemy_flag = get_flag(false);
 
-    if tick == 1 {
-        let mut assigned_defender = false;
+        if tick == 1 {
+            let mut assigned_defender = false;
 
-        for creep in &my_creeps {
-            match determine_creep_type(creep) {
-                CreepType::Healer => {
-                    if !assigned_defender {
-                        Role::Defender.attach_to_creep(creep);
-                        assigned_defender = true;
-                    } else {
-                        Role::Healer.attach_to_creep(creep);
+            for creep in &my_creeps {
+                match determine_creep_type(creep) {
+                    CreepType::Healer => {
+                        if !assigned_defender {
+                            Role::Defender.attach_to_creep(creep);
+                            assigned_defender = true;
+                        } else {
+                            Role::Healer.attach_to_creep(creep);
+                        }
                     }
+                    _ => Role::Attacker.attach_to_creep(creep),
                 }
-                _ => Role::Attacker.attach_to_creep(creep),
             }
         }
-    }
 
-    if let Some(closest_enemy) = my_flag.find_closest_by_range(&create_creeps_array(&enemies)) {
-        let enemy_distance_to_flag = my_flag.get_range_to(&closest_enemy);
-        let closest_enemy_creep = object_to_creep(&closest_enemy).unwrap();
-        let enemy_state = EnemyState::new(&enemies, enemy_distance_to_flag, tick);
+        if let Some(closest_enemy) = my_flag.find_closest_by_range(&create_creeps_array(&enemies)) {
+            let enemy_distance_to_flag = my_flag.get_range_to(&closest_enemy);
+            let closest_enemy_creep = object_to_creep(&closest_enemy).unwrap();
+            let enemy_state = EnemyState::new(&enemies, enemy_distance_to_flag, tick);
 
-        for creep in &my_creeps {
-            let role = Role::from(creep);
+            for creep in &my_creeps {
+                let role = Role::from(creep);
 
-            match role {
-                Role::Defender => run_defender(creep, &my_flag),
-                Role::Attacker | Role::Healer => run_attacker(
-                    creep,
-                    &my_flag,
-                    &my_creeps,
-                    enemy_state,
-                    &enemies,
-                    &enemy_flag,
-                    &closest_enemy_creep,
-                ),
-                // Role::Healer => run_healer(creep, &my_creeps, &my_flag),
+                match role {
+                    Role::Defender => run_defender(creep, &my_flag),
+                    Role::Attacker | Role::Healer => run_attacker(
+                        creep,
+                        &my_flag,
+                        &my_creeps,
+                        enemy_state,
+                        &enemies,
+                        &enemy_flag,
+                    ),
+                    // Role::Healer => run_healer(creep, &my_creeps, &my_flag),
+                }
             }
-        }
-        run_towers(&my_towers, &closest_enemy_creep, enemy_distance_to_flag);
-    } else {
-        for creep in &my_creeps {
-            creep.move_to(&enemy_flag, None);
+            run_towers(&my_towers, &closest_enemy_creep, enemy_distance_to_flag);
+        } else {
+            for creep in &my_creeps {
+                creep.move_to(&enemy_flag, None);
+            }
         }
     }
 }
@@ -159,7 +161,6 @@ fn run_attacker(
     enemy_state: EnemyState,
     enemy_creeps: &Vec<Creep>,
     enemy_flag: &Flag,
-    closest_enemy_to_our_flag: &Creep,
 ) {
     let hurt_creeps = get_hurt_creeps(my_creeps);
     if !hurt_creeps.is_empty() && Role::from(creep) == Role::Healer {
@@ -247,53 +248,4 @@ fn create_body_parts_array(body_parts: &Vec<BodyPart>) -> Array {
     }
 
     body_parts_array
-}
-
-fn can_attack(creep: &Creep) -> bool {
-    for body_part in creep.body() {
-        match body_part.part() {
-            screeps_arena::Part::Attack => return true,
-            _ => continue,
-        }
-    }
-
-    false
-}
-
-fn can_ranged_attack(creep: &Creep) -> bool {
-    for body_part in creep.body() {
-        match body_part.part() {
-            screeps_arena::Part::RangedAttack => return true,
-            _ => continue,
-        }
-    }
-
-    false
-}
-
-fn can_heal(creep: &Creep) -> bool {
-    for body_part in creep.body() {
-        match body_part.part() {
-            screeps_arena::Part::Heal => return true,
-            _ => continue,
-        }
-    }
-
-    false
-}
-
-fn run_healer(me: &Creep, other_creeps: &Vec<Creep>, our_flag: &Flag) {
-    let hurt_creeps = get_hurt_creeps(other_creeps);
-    if hurt_creeps.is_empty() {
-        me.move_to(&our_flag, None);
-    } else {
-        let hurt_creep_array = create_creeps_array(&hurt_creeps);
-        if let Some(closest_hurt_creep_object) = me.find_closest_by_path(&hurt_creep_array, None) {
-            let closest_hurt_creep = object_to_creep(&closest_hurt_creep_object).unwrap();
-            if me.heal(&closest_hurt_creep) == ReturnCode::NotInRange {
-                me.ranged_heal(&closest_hurt_creep);
-                me.move_to(&closest_hurt_creep, None);
-            }
-        }
-    }
 }

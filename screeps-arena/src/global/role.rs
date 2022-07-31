@@ -1,8 +1,6 @@
-use std::thread::panicking;
-
 use js_sys::Reflect;
 use log::warn;
-use screeps_arena::Creep;
+use screeps_arena::{Creep, Part};
 use wasm_bindgen::JsValue;
 
 #[derive(PartialEq)]
@@ -10,13 +8,55 @@ pub enum Role {
     Defender,
     Attacker,
     Healer,
+    Collector,
+    Unknown,
 }
 
 impl Role {
     pub fn attach_to_creep(self, creep: &Creep) {
         if let Err(error) = Reflect::set(creep, &JsValue::from_str("role"), &self.js_value()) {
-            warn!("error attaching role to creep");
+            warn!("error attaching role to creep: {:?}", error);
             panic!();
+        }
+    }
+
+    pub fn create_body_for_role(&self) -> Vec<Part> {
+        match self {
+            Role::Defender => todo!(),
+            Role::Attacker => vec![
+                Part::Tough,
+                Part::Tough,
+                Part::Tough,
+                Part::Tough,
+                Part::Tough,
+                Part::Heal,
+                Part::RangedAttack,
+                Part::RangedAttack,
+                Part::RangedAttack,
+                Part::Move,
+                Part::Move,
+                Part::Move,
+                Part::Move,
+                Part::Move,
+            ],
+            Role::Healer => todo!(),
+            Role::Collector => vec![
+                Part::Tough,
+                Part::Tough,
+                Part::Tough,
+                Part::Tough,
+                Part::Tough,
+                Part::Carry,
+                Part::Carry,
+                Part::Carry,
+                Part::Move,
+                Part::Move,
+                Part::Move,
+                Part::Move,
+                Part::Move,
+                Part::Move,
+            ],
+            Role::Unknown => todo!(),
         }
     }
 
@@ -25,6 +65,8 @@ impl Role {
             Role::Defender => "defender",
             Role::Attacker => "attacker",
             Role::Healer => "healer",
+            Role::Collector => "collector",
+            Role::Unknown => "unknown",
         })
     }
 }
@@ -43,10 +85,8 @@ impl From<&Creep> for Role {
             "defender" => Self::Defender,
             "attacker" => Self::Attacker,
             "healer" => Self::Healer,
-            _ => {
-                warn!("unknown role");
-                panic!();
-            }
+            "collector" => Self::Collector,
+            _ => Self::Unknown,
         }
     }
 }

@@ -1,9 +1,13 @@
+use log::warn;
 use screeps_arena::game;
 use wasm_bindgen::prelude::*;
 
-mod ctf;
+// #[cfg(feature = "arena-capture-the-flag")]
+// mod ctf;
+
 mod global;
 mod logging;
+mod swamp;
 mod tutorials;
 
 fn setup() {
@@ -70,6 +74,14 @@ pub fn tick() {
 
     #[cfg(feature = "arena-capture-the-flag")]
     {
-        ctf::run(tick);
+        // ctf::run(tick);
+    }
+
+    #[cfg(feature = "arena-spawn-and-swamp")]
+    {
+        if let Err(error) = swamp::run(tick) {
+            let error_message = format!("{:?}", error);
+            warn!("{error_message}");
+        }
     }
 }
