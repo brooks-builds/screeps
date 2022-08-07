@@ -1,3 +1,5 @@
+use std::cell::Ref;
+
 use js_sys::{Array, JsString, Object, Reflect};
 use log::warn;
 use screeps_arena::{
@@ -75,4 +77,19 @@ pub fn containers_to_array(containers: &Vec<StructureContainer>) -> Array {
     });
 
     array
+}
+
+pub fn create_position_object(x: u8, y: u8) -> Object {
+    let position = Object::new();
+    Reflect::set(
+        &position,
+        &JsValue::from_str("x"),
+        &JsValue::from_str(x.to_string().as_str()),
+    );
+    Reflect::set(
+        &position,
+        &JsValue::from_str("y"),
+        &JsValue::from_str(y.to_string().as_str()),
+    );
+    position
 }
