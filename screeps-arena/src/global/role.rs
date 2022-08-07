@@ -12,6 +12,7 @@ pub enum Role {
     Unknown,
 }
 
+#[allow(dead_code)]
 impl Role {
     pub fn attach_to_creep(self, creep: &Creep) {
         if let Err(error) = Reflect::set(creep, &JsValue::from_str("role"), &self.js_value()) {

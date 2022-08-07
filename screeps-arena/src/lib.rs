@@ -1,4 +1,3 @@
-use log::warn;
 use screeps_arena::game;
 use wasm_bindgen::prelude::*;
 

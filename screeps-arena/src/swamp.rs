@@ -1,8 +1,7 @@
-use eyre::{bail, Result};
-use log::warn;
+use eyre::Result;
 use screeps_arena::{
-    game::utils::get_objects_by_prototype, prototypes, BodyPart, Creep, OwnedStructureProperties,
-    Part, ResourceType, ReturnCode, StructureContainer, StructureSpawn,
+    game::utils::get_objects_by_prototype, prototypes, Creep, OwnedStructureProperties,
+    ResourceType, ReturnCode, StructureContainer, StructureSpawn,
 };
 
 use crate::global::{
@@ -12,6 +11,7 @@ use crate::global::{
     },
 };
 
+#[allow(dead_code)]
 struct CreepTypes {
     pub have_collectors: u8,
     pub want_collectors: u8,
@@ -19,6 +19,7 @@ struct CreepTypes {
     pub want_attackers: u8,
 }
 
+#[allow(dead_code)]
 impl CreepTypes {
     pub fn init(creeps: &Vec<Creep>) -> Self {
         let mut creep_types = Self::default();
@@ -58,7 +59,8 @@ impl Default for CreepTypes {
     }
 }
 
-pub fn run(tick: u32) -> Result<()> {
+#[allow(dead_code)]
+pub fn run(_tick: u32) -> Result<()> {
     let my_spawn = get_spawn(true);
     let my_creeps = get_creeps(true);
     let creep_types = CreepTypes::init(&my_creeps);
