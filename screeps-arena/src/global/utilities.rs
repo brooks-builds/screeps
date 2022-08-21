@@ -1,12 +1,12 @@
-use std::cell::Ref;
-
+use eyre::{bail, Result};
 use js_sys::{Array, JsString, Object, Reflect};
 use log::warn;
 use screeps_arena::{
-    game::utils::get_objects_by_prototype,
+    game::utils::{get_object_by_id, get_objects_by_prototype},
     prototypes::{self},
-    Creep, StructureContainer,
+    Creep, OwnedStructureProperties, ResourceType, StructureContainer, StructureSpawn,
 };
+use std::{cell::Ref, str::FromStr};
 use wasm_bindgen::JsValue;
 
 #[allow(dead_code)]
@@ -18,7 +18,7 @@ pub fn get_creeps(my: bool) -> Vec<Creep> {
 }
 
 #[allow(dead_code)]
-pub fn creep_to_array(creeps: &Vec<Creep>) -> Array {
+pub fn creep_to_array(creeps: &[Creep]) -> Array {
     let result = Array::new();
 
     for creep in creeps {
@@ -92,4 +92,29 @@ pub fn create_position_object(x: u8, y: u8) -> Object {
         &JsValue::from_str(y.to_string().as_str()),
     );
     position
+}
+
+pub fn get_spawn(my: bool) -> Option<StructureSpawn> {
+    let spawns = get_objects_by_prototype(prototypes::STRUCTURE_SPAWN)
+        .into_iter()
+        .filter(|spawn| spawn.my().unwrap_or_default() == my)
+        .collect::<Vec<StructureSpawn>>();
+
+    if !spawns.is_empty() {
+        Some(spawns[0].clone())
+    } else {
+        None
+    }
+}
+
+pub fn get_containers(with_energy: bool) -> Vec<StructureContainer> {
+    get_objects_by_prototype(prototypes::STRUCTURE_CONTAINER)
+        .into_iter()
+        .filter(|container| {
+            container
+                .store()
+                .get_used_capacity(Some(ResourceType::Energy))
+                > 0
+        })
+        .collect()
 }

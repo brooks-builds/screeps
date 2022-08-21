@@ -23,14 +23,22 @@ impl Role {
 
     pub fn create_body_for_role(&self) -> Vec<Part> {
         match self {
-            Role::Defender => todo!(),
+            Role::Defender => {
+                vec![
+                    Part::Attack,
+                    Part::Attack,
+                    Part::Attack,
+                    Part::RangedAttack,
+                    Part::RangedAttack,
+                    Part::RangedAttack,
+                    Part::Move,
+                    Part::Move,
+                    Part::Move,
+                ]
+            }
             Role::Attacker => vec![
-                Part::Tough,
-                Part::Tough,
-                Part::Tough,
-                Part::Tough,
-                Part::Tough,
-                Part::RangedAttack,
+                Part::Attack,
+                Part::Attack,
                 Part::RangedAttack,
                 Part::RangedAttack,
                 Part::Move,
@@ -38,18 +46,15 @@ impl Role {
                 Part::Move,
                 Part::Move,
                 Part::Move,
+                Part::Move,
+                Part::Move,
+                Part::Move,
+                Part::Move,
+            ],
+            Role::Healer => vec![
                 Part::Heal,
-            ],
-            Role::Healer => todo!(),
-            Role::Collector => vec![
-                Part::Tough,
-                Part::Tough,
-                Part::Tough,
-                Part::Tough,
-                Part::Tough,
-                Part::Carry,
-                Part::Carry,
-                Part::Carry,
+                Part::Heal,
+                Part::Move,
                 Part::Move,
                 Part::Move,
                 Part::Move,
@@ -57,7 +62,11 @@ impl Role {
                 Part::Move,
                 Part::Move,
             ],
-            Role::Unknown => todo!(),
+            Role::Collector => vec![Part::Carry, Part::Move],
+            Role::Unknown => {
+                warn!("unknown role");
+                panic!();
+            }
         }
     }
 
