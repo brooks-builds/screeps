@@ -1,12 +1,13 @@
-use eyre::{bail, Result};
+#![allow(dead_code)]
+
+use eyre::Result;
 use js_sys::{Array, JsString, Object, Reflect};
 use log::warn;
 use screeps_arena::{
-    game::utils::{get_object_by_id, get_objects_by_prototype},
+    game::utils::get_objects_by_prototype,
     prototypes::{self},
     Creep, OwnedStructureProperties, ResourceType, StructureContainer, StructureSpawn,
 };
-use std::{cell::Ref, str::FromStr};
 use wasm_bindgen::JsValue;
 
 #[allow(dead_code)]
@@ -85,12 +86,14 @@ pub fn create_position_object(x: u8, y: u8) -> Object {
         &position,
         &JsValue::from_str("x"),
         &JsValue::from_str(x.to_string().as_str()),
-    );
+    )
+    .unwrap();
     Reflect::set(
         &position,
         &JsValue::from_str("y"),
         &JsValue::from_str(y.to_string().as_str()),
-    );
+    )
+    .unwrap();
     position
 }
 
@@ -107,7 +110,7 @@ pub fn get_spawn(my: bool) -> Option<StructureSpawn> {
     }
 }
 
-pub fn get_containers(with_energy: bool) -> Vec<StructureContainer> {
+pub fn get_containers(_with_energy: bool) -> Vec<StructureContainer> {
     get_objects_by_prototype(prototypes::STRUCTURE_CONTAINER)
         .into_iter()
         .filter(|container| {
@@ -117,4 +120,14 @@ pub fn get_containers(with_energy: bool) -> Vec<StructureContainer> {
                 > 0
         })
         .collect()
+}
+
+pub fn get_creep_id(creep: &Creep) -> Result<f64> {
+    let id = creep.id();
+    id.as_f64().ok_or(eyre::eyre!("creep id is not a string"))
+}
+
+pub enum Side {
+    Left,
+    Right,
 }
